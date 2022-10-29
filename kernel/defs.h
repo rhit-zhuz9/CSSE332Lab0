@@ -8,7 +8,6 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
-struct list_head;
 
 // bio.c
 void            binit(void);
@@ -185,14 +184,6 @@ void            plic_complete(int);
 void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
 void            virtio_disk_intr(void);
-
-
-// list.c
-void            init_list_head(struct list_head *);
-void            list_add(struct list_head *, struct list_head *);
-void            list_add_tail(struct list_head *, struct list_head *);
-void            list_del(struct list_head *);
-void            list_del_init(struct list_head *);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
