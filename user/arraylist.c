@@ -27,11 +27,11 @@
 #define DEF_ARRAY_LIST_CAPACITY 4
 
 /**
- * A array list structure that can contain a list of integers.
+ * @brief An array list structure that can contain a list of integers.
  *
- * @size          The current size of the array list.
- * @capacity      The max size of the array list.
- * @list          The actual list.
+ * @var size          The current size of the array list.
+ * @var capacity      The max size of the array list.
+ * @var list          The actual list.
  */
 struct arraylist {
   int size;
@@ -40,7 +40,12 @@ struct arraylist {
 };
 
 /**
- * al_new - Allocate and initialize a new array list.
+ * @brief Allocate and initialize a new array list.
+ * 
+ * Allocate room for a new array list and set its size and capacity to the
+ * default values. Be aware that the array list originally has a capacity of
+ * DEF_ARRAY_LIST_CAPACITY, and thus must allocate room for the internal list as
+ * well. 
  *
  * @return a new array list.
  */
@@ -51,9 +56,12 @@ struct arraylist *al_new(void)
 }
 
 /**
- * al_free - Free an allocated list.
+ * @brief Free an allocated list.
+ * 
+ * Free an allocated array by freeing the internal list first and then freeing
+ * the structure itself. 
  *
- * @warning The point is invalid after returning from this function.
+ * @warning The list is invalid after returning from this function.
  */
 void al_free(struct arraylist *al)
 {
@@ -61,11 +69,15 @@ void al_free(struct arraylist *al)
 }
 
 /**
- * al_insert_at - Insert a new element at the position pos.
+ * @brief Insert a new element at the position pos.
+ * 
+ * Replace an element in the array list at position give by the pos parameter.
+ * The original element must already be present in the list. If no such original
+ * element exists, the function should do nothing. 
  *
- * @al          The array list.
- * @pos         The position where to insert.
- * @val         The value to insert.
+ * @param al          The array list.
+ * @param pos         The position where to insert.
+ * @param val         The value to insert.
  *
  * @warning This function does not increase the size of the array list, it
  * rather replaces an element in the list at position pos.
@@ -76,12 +88,14 @@ void al_insert_at(struct arraylist *al, int pos, int val)
 }
 
 /**
- * al_get_at - Get the element at position pos.
+ * @brief Get the element at position pos.
+ * 
+ * Return the element at the given position pos. 
  *
- * @al         The array list.
- * @pos        The position where to get.
+ * @param al         The array list.
+ * @param pos        The position where to get.
  *
- * @return     Returns the element at position pos, 0xffffffffff if invalid.
+ * @return     Returns the element at position pos, 0xffffffff if invalid.
  */
 int al_get_at(struct arraylist *al, int pos)
 {
@@ -90,12 +104,16 @@ int al_get_at(struct arraylist *al, int pos)
 }
 
 /**
- * al_resize - Resize an array list.
+ * @brief Resize an array list.
+ * 
+ * Resize the array list by making sure the internal list grows double in size. 
+ * Note that all the elements in the list must be preserved, i.e., the original
+ * content of the list must still be present in there after the resize. 
  *
- * @al         The array list.
+ * @param al         The array list.
  *
- * This would be easy if we had access to the realloc libc function, but we do
- * not, so we must do things the old hard way.
+ * @warning This would be easy if we had access to the realloc libc function,
+ * but we do not, so we must do things the old hard way.
  */
 void al_resize(struct arraylist *al)
 {
@@ -103,13 +121,16 @@ void al_resize(struct arraylist *al)
 }
 
 /**
- * al_append - Append a new element to the list.
+ * @brief Append a new element to the list.
+ * 
+ * Add a new element at the end of the list. If the list is out of space, this
+ * will cause a resize and add the element. 
  *
- * @al            The array list.
- * @val           The value to append.
+ * @param al            The array list.
+ * @param val           The value to append.
  *
- * This function will cause the array list to increase in size. If the array
- * list goes over capacity, it will resize the array list and double the
+ * @warning This function will cause the array list to increase in size. If the
+ * array list goes over capacity, it will resize the array list and double the
  * capacity.
  */
 void al_append(struct arraylist *al, int val)
@@ -118,9 +139,9 @@ void al_append(struct arraylist *al, int val)
 }
 
 /**
- * al_print - Print the elements of an array list.
+ * @brief Print the elements of an array list.
  *
- * @al         The array list to print.
+ * @param al         The array list to print.
  */
 void al_print(struct arraylist *al)
 {

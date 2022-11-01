@@ -192,3 +192,14 @@ grade:
 	@$(MAKE) clean || \
           (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
 	./grade-lab-$(LAB).py $(GRADEFLAGS)
+
+##
+## FOR submission purposes
+##
+
+submit: 
+	@echo $(MAKE) clean
+	@$(MAKE) clean || \
+	 (echo "'make clean' failed. HINT: Do you have another running instance of xv6?" && exit 1)
+	@git diff > submit-lab-$(LAB).patch
+	@tar --exclude={"*.out.*","*.out","__pycache__/",".git/"} -cvf submit-lab-$(LAB).tar ./*	
