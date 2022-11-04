@@ -21,40 +21,40 @@ def test_ensure_correct_order():
     r.match("^test_ensure_correct_order\\(\\d+\\): OK\.",
             no=[".*Assertion FAILED.*"])
 
-@test(5, "warmup, special equals")
+@test(10, "warmup, special equals")
 def test_special_equals():
     r.run_qemu(shell_script(['warmup 3']))
     r.match("^test_special_equals\\(\\d+\\): OK\.",
             no=[".*Assertion FAILED.*"])
 
-@test(5, "warmup, string with q")
+@test(10, "warmup, string with q")
 def test_string_with_q():
     r.run_qemu(shell_script(['warmup 4']))
     r.match("^test_string_with_q\\(\\d+\\): OK\.",
             no=[".*Assertion FAILED.*"])
 
-@test(5, "sleep, no arguments")
+@test(2, "sleep, no arguments")
 def test_sleep_no_args():
     r.run_qemu(shell_script(['sleep']))
     r.match(no=["exec .* failed", "$ sleep\n$"])
 
-@test(5, "sleep, returns")
+@test(3, "sleep, returns")
 def test_sleep_returns():
     r.run_qemu(shell_script(['sleep', 'echo OK']))
     r.match("^OK$", no=["exec .* failed", "$ sleep\n$"])
 
-@test(5, "sleep, makes syscall")
+@test(15, "sleep, makes syscall")
 def test_sleep():
     r.run_qemu(shell_script(['sleep 10', 'echo FAIL']),
                stop_breakpoint('sys_sleep'))
     r.match("\\$ sleep 10", no=['FAIL'])
 
-@test(15, "arraylist, all")
+@test(20, "arraylist, all")
 def test_arraylist():
     r.run_qemu(shell_script(['arraylist']))
     r.match(".*OK.", no=[".*Assertion FAILED.*"])
 
-@test(10, "find, in current directory")
+@test(20, "find, in current directory")
 def test_find_curdir():
     fn = random_str()
     r.run_qemu(shell_script([
