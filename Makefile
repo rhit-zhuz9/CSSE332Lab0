@@ -1,6 +1,6 @@
 K=kernel
 U=user
-LAB=0
+LAB=1
 
 OBJS = \
   $K/entry.o \
@@ -88,7 +88,7 @@ $U/initcode: $U/initcode.S
 tags: $(OBJS) _init
 	etags *.S *.c
 
-ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o $U/rhtest.o $U/rhmalloc.o
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -T $U/user.ld -o $@ $^
@@ -133,6 +133,8 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_lab01basic\
+	$U/_lab01test\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -191,4 +193,16 @@ grade:
           (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
 	./grade-lab-$(LAB).py $(GRADEFLAGS)
 
+
+
+##
+## FOR submission purposes
+##
+
+submit:
+	@echo $(MAKE) clean
+	@$(MAKE) clean || \
+	 (echo "'make clean' failed. HINT: Do you have another running instance of xv6?" && exit 1)
+	@git diff > submit-lab-$(LAB).patch
+	@tar --exclude-from="exclude.txt" -cvf submit-lab-$(LAB).tar .
 
