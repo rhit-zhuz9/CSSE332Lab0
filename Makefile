@@ -1,6 +1,6 @@
 K=kernel
 U=user
-LAB=0
+LAB=5
 
 OBJS = \
   $K/entry.o \
@@ -133,6 +133,9 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_fault\
+	$U/_cowtest\
+	$U/_simplefork\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -191,4 +194,14 @@ grade:
           (echo "'make clean' failed.  HINT: Do you have another running instance of xv6?" && exit 1)
 	./grade-lab-$(LAB).py $(GRADEFLAGS)
 
+##
+## FOR submission purposes
+##
+
+submit:
+	@echo $(MAKE) clean
+	@$(MAKE) clean || \
+	 (echo "'make clean' failed. HINT: Do you have another running instance of xv6?" && exit 1)
+	@git diff > submit-lab-$(LAB).patch
+	@tar --exclude-from="exclude.txt" -cvf submit-lab-$(LAB).tar .
 
