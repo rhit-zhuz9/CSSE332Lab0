@@ -37,7 +37,7 @@ void simpletest() {
   // only difference is that we do no call wait since wait calls copyout and
   // that breaks things for us.
   // UNCOMMENT THIS FOR STEP 3
-  wait(0);
+  /* wait(0); */
 
   if(sbrk(-sz) == (char *)0xffffffffffffffffL) {
     printf("sbrk(-%d) failed\n", sz);
