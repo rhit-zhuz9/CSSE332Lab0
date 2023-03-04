@@ -69,25 +69,6 @@ void al_free(struct arraylist *al)
 }
 
 /**
- * @brief Insert a new element at the position pos.
- * 
- * Replace an element in the array list at position give by the pos parameter.
- * The original element must already be present in the list. If no such original
- * element exists, the function should do nothing. 
- *
- * @param al          The array list.
- * @param pos         The position where to insert.
- * @param val         The value to insert.
- *
- * @warning This function does not increase the size of the array list, it
- * rather replaces an element in the list at position pos.
- */
-void al_insert_at(struct arraylist *al, int pos, int val)
-{
-  /* TODO: Add your code here. */
-}
-
-/**
  * @brief Get the element at position pos.
  * 
  * Return the element at the given position pos. 
