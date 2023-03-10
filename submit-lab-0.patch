@@ -8,6 +8,305 @@ index fe88f88..91d2300 100755
  
  import re
  from gradelib import *
+diff --git a/submit-lab-0.patch b/submit-lab-0.patch
+index d8b7204..e69de29 100644
+--- a/submit-lab-0.patch
++++ b/submit-lab-0.patch
+@@ -1,294 +0,0 @@
+-diff --git a/grade-lab-0.py b/grade-lab-0.py
+-index fe88f88..91d2300 100755
+---- a/grade-lab-0.py
+-+++ b/grade-lab-0.py
+-@@ -1,4 +1,4 @@
+--#!/usr/bin/env python
+-+#!/usr/bin/env python3
+- 
+- import re
+- from gradelib import *
+-diff --git a/user/arraylist.c b/user/arraylist.c
+-index f78468a..6218796 100644
+---- a/user/arraylist.c
+-+++ b/user/arraylist.c
+-@@ -1,4 +1,4 @@
+--/****************************************************************************
+-+  /****************************************************************************
+-  * Copyright © 2022 Rose-Hulman Institute of Technology
+-  *
+-  * Permission is hereby granted, free of charge, to any person obtaining a copy
+-@@ -51,8 +51,12 @@ struct arraylist {
+-  */
+- struct arraylist *al_new(void)
+- {
+--  /* TODO: Add your code here. */
+--  return 0;
+-+  struct arraylist *al = malloc(sizeof(struct arraylist));
+-+  al->size = 0;
+-+  al-> capacity = DEF_ARRAY_LIST_CAPACITY;
+-+  al->list = malloc(DEF_ARRAY_LIST_CAPACITY*sizeof(int));
+-+  
+-+  return al;
+- }
+- 
+- /**
+-@@ -66,6 +70,8 @@ struct arraylist *al_new(void)
+- void al_free(struct arraylist *al)
+- {
+-   /* TODO: Add your code here. */
+-+  free(al->list);
+-+  free(al);
+- }
+- 
+- /**
+-@@ -81,7 +87,10 @@ void al_free(struct arraylist *al)
+- int al_get_at(struct arraylist *al, int pos)
+- {
+-   /* TODO: Add your code here. */
+--  return 0;
+-+  if(pos >= (al->size)){
+-+    return 0xffffffff;
+-+  }
+-+  return *((al->list)+pos);
+- }
+- 
+- /**
+-@@ -99,6 +108,15 @@ int al_get_at(struct arraylist *al, int pos)
+- void al_resize(struct arraylist *al)
+- {
+-   /* TODO: Add your code here. */
+-+  int *new_list;
+-+  int new_capacity = 2 * al->capacity;
+-+  new_list = malloc(new_capacity * sizeof(int));
+-+  for (int i = 0; i < al->size; i++) {
+-+    new_list[i] = al->list[i];
+-+  }
+-+  free(al->list);
+-+  al->list = new_list;
+-+  al->capacity = new_capacity;
+- }
+- 
+- /**
+-@@ -117,6 +135,11 @@ void al_resize(struct arraylist *al)
+- void al_append(struct arraylist *al, int val)
+- {
+-   /* TODO: Add your code here. */
+-+  if(al->size >= al->capacity){
+-+    al_resize(al);
+-+  }
+-+  al->list[al->size] = val;
+-+  al->size++;
+- }
+- 
+- /**
+-diff --git a/user/find.c b/user/find.c
+-index 8f3fe28..61a842e 100644
+---- a/user/find.c
+-+++ b/user/find.c
+-@@ -3,8 +3,103 @@
+- #include "kernel/fs.h"
+- #include "kernel/stat.h"
+- 
+-+char*
+-+fmtname(char *path)
+-+{
+-+  static char buf[DIRSIZ+1];
+-+  char *p;
+-+
+-+  // Find first character after last slash.
+-+  for(p=path+strlen(path); p >= path && *p != '/'; p--)
+-+    ;
+-+  p++;
+-+
+-+  // Return blank-padded name.
+-+  if(strlen(p) >= DIRSIZ)
+-+    return p;
+-+  memmove(buf, p, strlen(p));
+-+  memset(buf+strlen(p), ' ', 0);
+-+  return buf;
+-+}
+-+
+-+char *str_append(char *str1, char *str2) {
+-+    int len1 = strlen(str1);
+-+    int len2 = strlen(str2);
+-+    char *result = malloc(sizeof(char)*(len1+len2+1)); 
+-+    
+-+   
+-+    for (int i = 0; i < len1; i++) {
+-+        result[i] = str1[i];
+-+    }
+-+    
+-+    for (int i = 0; i < len2; i++) {
+-+        result[len1 + i] = str2[i];
+-+    }
+-+    
+-+    result[len1 + len2] = '\0';
+-+    
+-+    return result;
+-+}
+-+
+-+void find(char *path, char *target){
+-+  char buf[512], *p;
+-+  int fd;
+-+  struct dirent de;
+-+  struct stat st;
+-+
+-+  if((fd = open(path, 0)) < 0){
+-+    fprintf(2, "find: cannot open %s\n", path);
+-+    return;
+-+  }
+-+
+-+  if(fstat(fd, &st) < 0){
+-+    fprintf(2, "find: cannot stat %s\n", path);
+-+    close(fd);
+-+    return;
+-+  }
+-+  switch(st.type){
+-+  case T_DEVICE:
+-+  case T_FILE:
+-+    if(strcmp((fmtname(path)), target) == 0){
+-+      printf("%s/%s\n", path, fmtname(path));
+-+    }
+-+    break;
+-+
+-+  case T_DIR:
+-+    if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
+-+      printf("find: path too long\n");
+-+      break;
+-+    }
+-+    strcpy(buf, path);
+-+    p = buf+strlen(buf);
+-+    *p++ = '/';
+-+    while(read(fd, &de, sizeof(de)) == sizeof(de)){
+-+      if(de.inum == 0)
+-+        continue;
+-+      memmove(p, de.name, DIRSIZ);
+-+      p[DIRSIZ] = 0;
+-+      if(stat(buf, &st) < 0){
+-+        printf("find: cannot stat %s\n", buf);
+-+        continue;
+-+      }
+-+      // char *full_path = str_append(path,"/");
+-+      // full_path = str_append(full_path, fmtname(buf));
+-+      // printf("path: %s, target: %s\n", full_path, target);
+-+      printf("dir:%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+-+    }
+-+    break;
+-+  }
+-+  close(fd);  
+-+}
+-+
+- int main(int argc, char **argv)
+- {
+--  /* TODO: Insert your code here. */
+-+  if(argc < 3){
+-+    printf("Usage: find + dir + target file\n");
+-+    exit(1);
+-+  }
+-+  find(argv[1], argv[2]);
+-   exit(0);
+- }
+-+
+-+
+-diff --git a/user/ls.c b/user/ls.c
+-index c67b84b..1c38bfb 100644
+---- a/user/ls.c
+-+++ b/user/ls.c
+-@@ -44,7 +44,7 @@ ls(char *path)
+-   switch(st.type){
+-   case T_DEVICE:
+-   case T_FILE:
+--    printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
+-+    printf("file: %s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
+-     break;
+- 
+-   case T_DIR:
+-@@ -64,7 +64,7 @@ ls(char *path)
+-         printf("ls: cannot stat %s\n", buf);
+-         continue;
+-       }
+--      printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+-+      printf("dir:%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+-     }
+-     break;
+-   }
+-diff --git a/user/sleep.c b/user/sleep.c
+-index 14aab29..4f219e5 100644
+---- a/user/sleep.c
+-+++ b/user/sleep.c
+-@@ -3,7 +3,12 @@
+- 
+- int main(int argc, char **argv)
+- {
+--  /* TODO: Insert your code here. */
+-+  if(argc < 2){
+-+    printf("Please input the time you want to stop\n");
+-+    exit(1);
+-+  }
+-+  int value = atoi(argv[1]);
+-+  sleep(value);
+- 
+-   exit(0);
+- }
+-diff --git a/user/warmup.c b/user/warmup.c
+-index d4d12c0..21063d2 100644
+---- a/user/warmup.c
+-+++ b/user/warmup.c
+-@@ -32,7 +32,8 @@
+- int add_with_pointers(int *val1, int *val2)
+- {
+-   /* TODO: ADD YOUR CODE HERE */
+--  return 0;
+-+  int a = *val1 + *val2;
+-+  return a;
+- }
+- 
+- void test_add_with_pointers(void)
+-@@ -53,6 +54,12 @@ void test_add_with_pointers(void)
+- void ensure_correct_order(int *should_be_smaller, int *should_be_larger)
+- {
+-   /* TODO: ADD YOUR CODE HERE */
+-+  int a = *should_be_smaller;
+-+  int b = *should_be_larger;
+-+  if(a > b){
+-+    *should_be_smaller = b;
+-+    *should_be_larger = a;
+-+  }
+- }
+- 
+- void test_ensure_correct_order(void)
+-@@ -82,6 +89,13 @@ void test_ensure_correct_order(void)
+- int special_equals(int *val1, int *val2)
+- {
+-   /* TODO: ADD YOUR CODE HERE */
+-+  if(*val1 == *val2){
+-+    if(val1 == val2){
+-+      return 2;
+-+    }else{
+-+      return 1;
+-+    }
+-+  }
+-   return 0;
+- }
+- 
+-@@ -121,6 +135,19 @@ void test_special_equals(void)
+- void string_with_q(char *s1, char *s2, char **output)
+- {
+-   /* TODO: ADD YOUR CODE HERE */
+-+  int count = 0;
+-+  *output = 0;
+-+  while(*(s1+count) != '\0'){
+-+    if(*(s1+count) == 'Q'){
+-+      *output = s1;
+-+      break;
+-+    }else if(*(s2+count) == 'Q'){
+-+      *output = s2;
+-+      break;
+-+    }
+-+    count++;
+-+  }
+-+  
+- }
+- 
+- void test_string_with_q(void)
 diff --git a/user/arraylist.c b/user/arraylist.c
 index f78468a..6218796 100644
 --- a/user/arraylist.c
