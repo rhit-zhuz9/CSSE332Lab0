@@ -39,3 +39,12 @@ void free(void*);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+
+// rhmalloc.c
+void *rhmalloc(uint32);
+void rhfree(void*);
+uint8 rhmalloc_init(void);
+void rhfree_all(void);
+void *heap_start(void);
+void *get_buddy(void*, int);
+int is_initialized(void);
