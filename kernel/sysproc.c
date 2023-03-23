@@ -89,3 +89,23 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+uint64
+sys_getmaping(void)
+{
+  uint64 p, pa, dst;
+  argaddr(0, &p);
+  argaddr(1, &dst);
+
+  // TODO: Look into kernel/vm.c and find a function that allows you to
+  // translate a virtual address (p) into a physical address (va)
+  //  Hint: Should be a one liner.
+
+  // write the pa to the process
+  if(copyout(myproc()->pagetable, dst, (char*)&pa, sizeof(uint64)) < 0) {
+    printf("[syscall: getamaping error:] could not write back to user\n");
+    return -1;
+  }
+
+  return 0;
+}
