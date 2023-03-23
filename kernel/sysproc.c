@@ -97,6 +97,7 @@ sys_getmaping(void)
   argaddr(0, &p);
   argaddr(1, &dst);
 
+  pa = 0;
   // TODO: Look into kernel/vm.c and find a function that allows you to
   // translate a virtual address (p) into a physical address (va)
   //  Hint: Should be a one liner.

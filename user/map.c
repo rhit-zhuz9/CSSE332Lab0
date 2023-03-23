@@ -4,7 +4,7 @@
 void meminfo(int size)
 {
   char *p;
-  uint64 va;
+  uint64 va = 0;
   uint64 i;
 
   p = malloc(size);
