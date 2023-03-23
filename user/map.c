@@ -12,7 +12,7 @@ void meminfo(int size)
   printf(" Virtual Address   \t\t  Physical Address\n");
   printf("------------------ \t\t -------------------\n");
   for(i = (uint64)p; i < (uint64)(p + size); i += 4096) {
-    if(getmaping(i, (char **)&va) < 0) {
+    if(getmaping(i, (uint64)&va) < 0) {
       printf("[ERROR] Cannot call the getmaping system call\n");
       goto leave;
     }
@@ -20,7 +20,7 @@ void meminfo(int size)
   }
 
   printf("\n");
-  getmaping(i, (char**)&va);
+  getmaping(i, (uint64)&va);
   printf("Checking for invalid address %p -->  %p\n", (char*)i, (char*)va);
 
 leave:
