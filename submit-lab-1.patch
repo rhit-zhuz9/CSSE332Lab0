@@ -1,0 +1,116 @@
+* Unmerged path grade-lab-0.py
+diff --git a/grade-lab-1.py b/grade-lab-1.py
+index d6b22f1..56204cf 100755
+--- a/grade-lab-1.py
++++ b/grade-lab-1.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ import re
+ from gradelib import *
+* Unmerged path submit-lab-0.patch
+* Unmerged path submit-lab-0.tar
+* Unmerged path user/arraylist.c
+* Unmerged path user/find.c
+diff --git a/user/rhmalloc.c b/user/rhmalloc.c
+index 930680d..ea3dc6d 100644
+--- a/user/rhmalloc.c
++++ b/user/rhmalloc.c
+@@ -61,7 +61,7 @@ void *heap_start(void) { return heap_mem_start; }
+ uint8 rhmalloc_init(void)
+ {
+   char *p;
+-
++  
+   /* Grab the start of the memory where we are allocating. */
+   heap_mem_start = sbrk(0);
+ 
+@@ -73,8 +73,13 @@ uint8 rhmalloc_init(void)
+   }
+ 
+   /* TODO: Add code here to initialize freelist and its content. */
+-  
+-
++  metadata_t *block;
++  block = (metadata_t *)p;
++  block->s.size = MAX_HEAP_SIZE - sizeof(metadata_t);
++  block->s.in_use = 0;
++  // block->s.next = 0;
++  // block->s.prev = 0;
++  freelist = block;
+   return 0;
+ }
+ 
+@@ -106,7 +111,33 @@ void *rhmalloc(uint32 size)
+     if(rhmalloc_init()) return 0;
+ 
+   /* TODO: Add you malloc code here. */
++  unsigned size_to_allocate = ALIGN(size);
++  metadata_t *block = freelist;
++  while (block && (block->s.size < size_to_allocate || block->s.in_use)) {
++    block = block->s.next;
++  }
++  
+ 
++  if(block){
++    if(block->s.size - size_to_allocate < sizeof(metadata_t) + 8){
++      block->s.size = block->s.size;
++      block->s.in_use = 1;
++      return (void *)((char *)block + sizeof(metadata_t));
++    }else{
++      metadata_t *new_block = (metadata_t *)((char *)block + sizeof(metadata_t) + size_to_allocate);
++      new_block->s.size = block->s.size - size_to_allocate - sizeof(metadata_t);
++      new_block->s.in_use = 0;
++      new_block->s.next = block->s.next;
++      new_block->s.prev = block;
++      block->s.size = size_to_allocate;
++      block->s.in_use = 1;
++      block->s.next = new_block;
++      if (new_block->s.next) {
++        new_block->s.next->s.prev = new_block;
++      }
++      return (void *)((char *)block + sizeof(metadata_t));
++    }
++  }
+   return 0;
+ }
+ 
+@@ -121,5 +152,34 @@ void *rhmalloc(uint32 size)
+  */
+ void rhfree(void *ptr)
+ {
+-  /* TODO: Add your free code here. */
++  metadata_t *block = (metadata_t *)ptr -1;
++  block->s.in_use = 0;
++  
++  metadata_t *preBlock = (metadata_t *)block->s.prev;
++  metadata_t *nextBlock = (metadata_t *)block->s.next;
++
++  if(nextBlock){
++    if(!nextBlock->s.in_use){
++      block->s.next = nextBlock->s.next;
++      block->s.size += nextBlock->s.size + sizeof(metadata_t);
++      if(nextBlock->s.next){
++        nextBlock->s.next->s.prev = block;
++      }
++    }
++  }
++
++  if(preBlock){
++    if(!preBlock->s.in_use){
++      preBlock->s.next = block->s.next;
++      preBlock->s.size += block->s.size + sizeof(metadata_t);
++      if(block->s.next){
++        block->s.next->s.prev = preBlock;
++      }
++      block = preBlock;
++    }
++  }
++
++  if(freelist > block){
++    freelist = block;
++  }
+ }
+* Unmerged path user/sleep.c
+* Unmerged path user/warmup.c
