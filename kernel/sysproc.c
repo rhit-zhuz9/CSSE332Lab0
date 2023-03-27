@@ -101,7 +101,7 @@ sys_getmaping(void)
   // TODO: Look into kernel/vm.c and find a function that allows you to
   // translate a virtual address (p) into a physical address (va)
   //  Hint: Should be a one liner.
-
+  pa = walkaddr(myproc()->pagetable, p);
   // p is the virtual address (fake addres)
   // find pa, which is the physical frame number
 
