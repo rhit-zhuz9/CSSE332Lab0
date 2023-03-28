@@ -22,6 +22,7 @@
 #include "kernel/types.h"
 #include "user/user.h"
 #include "user/rhmalloc.h"
+#include <stdint.h>
 
 /**
  * Record the original start of our memory area in case we needed to allocate
@@ -41,6 +42,9 @@ static void *heap_mem_start = 0;
 */
 static int initialized = 0;
 
+static int MIN_BLOCK_SIZE = 32;
+
+metadata_t *free_lists[23];
 /**
  * For testing purposes, exposed the initialization bit.
 */
@@ -52,6 +56,35 @@ int is_initialized(void) { return initialized; }
  * @return The heam_mem_start ptr.
  */
 void *heap_start(void) { return heap_mem_start; }
+
+int round_pow2(int size) {
+  int res = 1;
+  while (res < size) {
+    res <<= 1;
+  }
+  return res;
+}
+
+int get_pow(int size){
+  int res = 1;
+  int pow = 0;
+  while (res < size) {
+    res <<= 1;
+    pow ++;
+  }
+  return pow;
+}
+
+void add_to_free_list(metadata_t *metadata) {
+    int size_index = get_pow(metadata->size);
+    metadata->in_use = 0;
+    metadata->next = free_lists[size_index];
+    metadata->prev = 0;
+    if (free_lists[size_index] != 0) {
+        free_lists[size_index]->prev = metadata;
+    }
+    free_lists[size_index] = metadata;
+}
 
 /**
  * Initialize the rh memroy allocator system.
@@ -95,7 +128,16 @@ uint8 rhmalloc_init(void)
 
   // TODO: Add your initialization code here, but do not change anything above
   // this line.
-
+  metadata_t *block = (metadata_t*) heap_mem_start;
+  block->size = MAX_HEAP_SIZE-sizeof(metadata_t);
+  block->in_use = 0;
+  block->next = 0;
+  block->prev = 0;
+  for(int i = 0; i<23 ; i++){
+    free_lists[i] = 0;
+  }
+  add_to_free_list(block);
+  
   return 0;
 }
 
@@ -137,8 +179,47 @@ void rhfree_all(void)
 void *get_buddy(void *ptr, int exponent)
 {
   // TODO: Add your code here.
-  return (void*)0;
+  int size = 1 << exponent;
+  void *buddy = (void *)((uintptr_t)ptr ^ size);
+  return buddy;
 }
+
+void split(int index){
+  if(free_lists[index] == 0){
+    split(index + 1);
+  }
+  int curSize = 1 << (index-1);
+  metadata_t *temp = free_lists[index];
+  if(temp->next != 0){
+    metadata_t *next = temp->next;
+    temp->prev = 0;
+    free_lists[index] = next;
+  }else{
+    free_lists[index] = 0;
+  }
+  metadata_t *block1 = temp;
+  metadata_t *block2 = (metadata_t *)((char *)block1 + curSize);
+  block1->size = curSize;
+  block2->size = curSize;
+  add_to_free_list(block2);
+  add_to_free_list(block1);
+}
+
+metadata_t *searchFree(int index){
+  if(free_lists[index] == 0){
+    split(index+1);
+  }
+  metadata_t *block = free_lists[index];
+  if(block->next != 0){
+    metadata_t *temp = block->next;
+    temp->prev = 0;
+    free_lists[index] = temp;
+  }else{
+    free_lists[index] = 0;
+  }
+  return block;
+}
+
 
 /**
  * Allocate size bytes and return a pointer to start of the region. 
@@ -152,8 +233,14 @@ void *rhmalloc(uint32 size)
     if(rhmalloc_init()) return 0;
 
   // TODO: Add your malloc code here.
-
-  return (void*)0;
+  int actual_size = round_pow2(size + sizeof(metadata_t));
+  if(actual_size < MIN_BLOCK_SIZE){
+    actual_size = MIN_BLOCK_SIZE;
+  }
+  int index = get_pow(actual_size);
+  metadata_t *block = searchFree(index);
+  block->in_use = 1;
+  return (void*) block;
 }
 
 /**
@@ -168,4 +255,16 @@ void *rhmalloc(uint32 size)
 void rhfree(void *ptr)
 {
   // TODO: Add your free code here.
+  metadata_t *block = (metadata_t *)ptr;
+  int exp = get_pow(block->size);
+  metadata_t *buddy =(metadata_t *)get_buddy(ptr,exp);
+  while(buddy->in_use != 1 && buddy->size == block->size){
+    if(buddy < block){
+      block = buddy;
+      block->in_use = 0;
+      block->size = block->size * 2;
+    }
+    buddy = get_buddy(block);
+  }
+  
 }
