@@ -52,8 +52,8 @@ main(int argc, char **argv)
 {
   simpletest();
 
-  // UNCOMMENT THIS FOR STEP 3
-  // simpletest();
+  //UNCOMMENT THIS FOR STEP 3
+  simpletest();
 
   exit(0);
 }

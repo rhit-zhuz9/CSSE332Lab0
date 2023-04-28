@@ -15,6 +15,7 @@ extern char etext[];  // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
 
+extern void increfcnt(uint64);
 // Make a direct-map page table for the kernel.
 pagetable_t
 kvmmake(void)
@@ -308,7 +309,7 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
   pte_t *pte;
   uint64 pa, i;
   uint flags;
-  char *mem;
+  //char *mem;
 
   for(i = 0; i < sz; i += PGSIZE){
     if((pte = walk(old, i, 0)) == 0)
@@ -316,20 +317,24 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto err;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(new, i, PGSIZE, (uint64)mem, flags) != 0){
-      kfree(mem);
-      goto err;
+    
+    if(*pte & PTE_W){
+      *pte |= PTE_RSW;
+      *pte &= ~PTE_W;
     }
+    
+    flags = PTE_FLAGS(*pte);
+    // if((mem = kalloc()) == 0)
+    //   goto err;
+    //memmove(mem, (char*)pa, PGSIZE);
+    mappages(new, i, PGSIZE, pa, flags);
+    increfcnt(pa);
   }
   return 0;
 
- err:
-  uvmunmap(new, 0, i / PGSIZE, 1);
-  return -1;
+//  err:
+//   uvmunmap(new, 0, i / PGSIZE, 1);
+//   return -1;
 }
 
 // mark a PTE invalid for user access.
@@ -355,6 +360,23 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
+
+    pte_t *pte;
+    pte = walk(pagetable, va0, 0);
+    uint flags = PTE_FLAGS(*pte);
+    
+    if((flags & PTE_V) && ((flags & PTE_W) == 0) && (flags & PTE_U) && (flags & PTE_RSW)){
+      uint64 pa;
+      char *mem = kalloc();
+      pa = PTE2PA(*pte);
+      memmove(mem, (char*)pa, PGSIZE);
+      uvmunmap(pagetable, va0, 1, 0);
+      kfree((void*) pa);
+      flags |= PTE_W;
+      flags &= ~PTE_RSW;
+      mappages(pagetable, va0, PGSIZE, (uint64)mem, flags);
+    }
+
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
       return -1;
